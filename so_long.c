@@ -163,8 +163,13 @@ int		check_map(t_data *d)
 		x = 0;
 		while (x < d->map_width)
 		{
+			if (d->map[y][0] != '1' || d->map[y][d->map_width - 1] != '1' || d->map[0][0] != '1' || d->map[0][x] != '1' || d->map[d->map_height - 1][0] != '1' || d->map[d->map_height - 1][x] != '1')
+				return (0);
 			if (d->map[y][x] == '1')
+			{
+				// printf("y = %d\tx = %d\n", y, x);
 				d->walls++;
+			}
 			else if (d->map[y][x] == 'P')
 				d->st_pos++;
 			else if (d->map[y][x] == 'C')
@@ -180,7 +185,8 @@ int		check_map(t_data *d)
 		y++;
 	}
 	// printf("1 = %d\tP = %d\tE = %d\tC = %d\t0 = %d\n", d->walls, d->st_pos, d->exit_E, d->collectibles, d->free_space);
-	if (d->exit_E != 1 || d->st_pos != 1 || d->collectibles < 1 || d->free_space < 1 || d->walls < ((d->map_height * 2) + (d->map_width * 2)))
+	// printf("%d\t%d\t%d\n", (d->map_height * 2), (d->map_width * 2), (d->map_height * 2) + (d->map_width * 2) - 4);
+	if (d->exit_E != 1 || d->st_pos != 1 || d->collectibles < 1 || d->free_space < 1 || d->walls < ((d->map_height * 2) + (d->map_width * 2) - 4))
 		return (0);
 	return (1);
 }
