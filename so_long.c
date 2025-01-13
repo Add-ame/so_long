@@ -143,38 +143,85 @@ void	put_img_to_map(t_data *d, char **map)
 }
 
 /*
+1- check if the map has: walls, collectibles, free spaces.
+	and 1 E, 1 C, 1 P
+2- 
+*/
+int		check_map(t_data *d)
+{
+	int		x;
+	int		y;
+
+	d->walls = 0;
+	d->collectibles = 0;
+	d->st_pos = 0;
+	d->exit_E = 0;
+	d->free_space = 0;
+	y = 0;
+	while (y < d->map_height)
+	{
+		x = 0;
+		while (x < d->map_width)
+		{
+			if (d->map[y][x] == '1')
+				d->walls++;
+			else if (d->map[y][x] == 'P')
+				d->st_pos++;
+			else if (d->map[y][x] == 'C')
+				d->collectibles++;
+			else if (d->map[y][x] == 'E')
+				d->exit_E++;
+			else if (d->map[y][x] == '0')
+				d->free_space++;
+			else
+				return (0);
+			x++;
+		}
+		y++;
+	}
+	// printf("1 = %d\tP = %d\tE = %d\tC = %d\t0 = %d\n", d->walls, d->st_pos, d->exit_E, d->collectibles, d->free_space);
+	if (d->exit_E != 1 || d->st_pos != 1 || d->collectibles < 1 || d->free_space < 1 || d->walls < ((d->map_height * 2) + (d->map_width * 2)))
+		return (0);
+	return (1);
+}
+
+/*
 1- take the map
 2- load the images
 3- put every img to it's place in the map
 4- handle input
+5- check map
 */
 int		main()
 {
 	t_data	d;
-	char	**map;
 	int		x;
 	int		y;
 
-	if (!check_map(&d))
-		return (0);
 	d.num_mov = 0;
 	d.coins = 0;
 	d.mlx = mlx_init();
-	d.win = mlx_new_window(d.mlx, 9 * 32, 5 * 32, "Titleeeee");
 
-	map = take_map(&d);
-	if (!map)
+	d.win = mlx_new_window(d.mlx, 9 * 32, 5 * 32, "Titleeeee");
+	d.map = take_map(&d);
+	if (!d.map)
 		return (0);
+
+	if (!check_map(&d))
+	{
+		printf("Error\n");
+		return (0);
+	}
 
 	load_imgs(&d);
 
-	put_img_to_map(&d, map);
+	put_img_to_map(&d, d.map);
 
 	for (y = 0; y < d.map_height; y++)
 	{
 		for (x = 0; x < d.map_width; x++)
 		{
-			if (map[y][x] == 'P')
+			if (d.map[y][x] == 'P')
 			{
 				d.x = x;
 				d.y = y;
@@ -182,7 +229,6 @@ int		main()
 			}
 		}
 	}
-	d.map = map;
 	mlx_hook(d.win, 2, 1L<<0, handle_key_press, &d);
 	mlx_loop(d.mlx);
 }
