@@ -114,12 +114,6 @@ void	put_img_to_map(t_data *d, char **map)
 }
 
 /*
-1- check if the map has: walls, collectibles, free spaces.
-	and 1 E, 1 C, 1 P
-2- 
-*/
-
-/*
 1- take the map
 2- load the images
 3- put every img to it's place in the map
@@ -134,18 +128,20 @@ int		main(int ac, char **av)
 	if (ac != 2)
 		return (0);
 	initialize(&d);
-	d.mlx = mlx_init();
-	d.win = mlx_new_window(d.mlx, 9 * 32, 5 * 32, "Titleeeee");
 	d.map = take_map(&d, av);
 	if (!d.map)
 		return (0);
-	if (!check_map(&d) || !valid_map(&d, d.map))
+	if (!check_map(&d) || !valid_map(&d, d.map) || !valid_map_2(&d, d.map))
 	{
 		write(2, "Error\n", 6);
 		exit(1);
 	}
+
+	d.mlx = mlx_init();
+	d.win = mlx_new_window(d.mlx, d.map_width * 32, d.map_height * 32, "Titleeeee");
 	load_imgs(&d);
 	put_img_to_map(&d, d.map);
 	mlx_hook(d.win, 2, 1L<<0, handle_key_press, &d);
+
 	mlx_loop(d.mlx);
 }
