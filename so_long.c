@@ -191,12 +191,64 @@ int		check_map(t_data *d)
 	return (1);
 }
 
+void	dfs(char **map, int y, int x, char O, char N, t_data *d)
+{
+	int		r;
+	int		c;
+
+	if (O == N)
+		return ;
+	r = d->map_height;
+	c = d->map_width;
+	// printf("y = %d\tx = %d\tr = %d\tc = %d\to = %c\tn = %c\tmap = %c", y, x, r, c, O, N, map[y][x]);
+	if (y < 0 || y >= r || x < 0 || x >= c || map[y][x] == N || map[y][x] == '1')
+		return ;
+	else
+	{
+		map[y][x] = N;
+		dfs(map, y + 1, x, O, N, d);
+		dfs(map, y - 1, x, O, N, d);
+		dfs(map, y, x + 1, O, N, d);
+		dfs(map, y, x - 1, O, N, d);
+	}
+}
+
+int		valid_map(t_data *d, char **map)
+{
+	int		y;
+	int		x;
+	int		c;
+	char	**cp_map;
+
+	cp_map = map_cpy(map, d->map_height, d->map_width);
+	dfs(cp_map, 1, 1, '0', 'N', d);
+	c = 0;
+	y = 0;
+	while (y < d->map_height)
+	{
+		x = 0;
+		while (x < d->map_width)
+		{
+			if (cp_map[y][x] == 'C' || cp_map[y][x] == 'E' || cp_map[y][x] == '0')
+				c++;
+			printf("%c", cp_map[y][x]);
+			x++;
+		}
+		printf("\n");
+		y++;
+	}
+	free_map(cp_map);
+
+	return (c == 0);
+}
+
 /*
 1- take the map
 2- load the images
 3- put every img to it's place in the map
 4- handle input
 5- check map
+4- check if the playyer can eat all collectibles
 */
 int		main()
 {
@@ -213,10 +265,10 @@ int		main()
 	if (!d.map)
 		return (0);
 
-	if (!check_map(&d))
+	if (!check_map(&d) || !valid_map(&d, d.map))
 	{
 		printf("Error\n");
-		return (0);
+		exit(1);
 	}
 
 	load_imgs(&d);
