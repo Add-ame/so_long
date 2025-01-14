@@ -1,26 +1,9 @@
 #include "so_long.h"
 
-int		handle_key_press(int keycode, t_data *d)
+
+
+void	move_player(t_data *d, int new_y, int new_x)
 {
-	int		new_x;
-	int		new_y;
-
-	new_x = d->x;
-	new_y = d->y;
-	if (keycode == ESC_KEY)
-	{
-		mlx_destroy_window(d->mlx, d->win);
-		exit(0);
-	}
-	else if ((keycode == 65361 || keycode == 97) && ++d->num_mov && printf("%d ", d->num_mov))//A
-		new_x--;
-	else if ((keycode == 65362 || keycode == 119) && ++d->num_mov && printf("%d ", d->num_mov))//W
-		new_y--;
-	else if ((keycode == 65363 || keycode == 100) && ++d->num_mov && printf("%d ", d->num_mov))//D
-		new_x++;
-	else if ((keycode == 65364 || keycode == 115) && ++d->num_mov && printf("%d ", d->num_mov))//S
-		new_y++;
-
 	if (d->map[new_y][new_x] == 'E' && d->coins != 0)
 		d->num_mov++;
 	else if (d->map[new_y][new_x] != '1')
@@ -38,65 +21,55 @@ int		handle_key_press(int keycode, t_data *d)
 		d->map[d->y][d->x] = 'P';
 		put_img_to_map(d, d->map);
 	}
+}
+
+void	assign_player_pos(t_data *d)
+{
+	int		x;
+	int		y;
+
+	y = 0;
+	while (y < d->map_height)
+	{
+		x = 0;
+		while (x < d->map_width)
+		{
+			if (d->map[y][x] == 'P')
+			{
+				d->x = x;
+				d->y = y;
+				break ;
+			}
+			x++;
+		}
+		y++;
+	}
+}
+
+int		handle_key_press(int keycode, t_data *d)
+{
+	int		new_x;
+	int		new_y;
+
+	assign_player_pos(d);
+	new_x = d->x;
+	new_y = d->y;
+	if (keycode == ESC_KEY)
+	{
+		mlx_destroy_window(d->mlx, d->win);
+		exit(0);
+	}
+	else if ((keycode == 65361 || keycode == 97) && ++d->num_mov && printf("%d ", d->num_mov))//A
+		new_x--;
+	else if ((keycode == 65362 || keycode == 119) && ++d->num_mov && printf("%d ", d->num_mov))//W
+		new_y--;
+	else if ((keycode == 65363 || keycode == 100) && ++d->num_mov && printf("%d ", d->num_mov))//D
+		new_x++;
+	else if ((keycode == 65364 || keycode == 115) && ++d->num_mov && printf("%d ", d->num_mov))//S
+		new_y++;
+	move_player(d, new_y, new_x);
 	return (0);
 }
-
-char	**take_map(t_data *d)
-{
-	char	*s;
-	char	**map;
-	int		fd;
-	int		i;
-	int		j;
-
-	fd = open("map.ber", O_RDONLY);
-	d->map_height = 1;
-	s = get_next_line(fd);
-	while (s)
-	{
-		i = 0;
-		d->map_width = 0;
-		while (s[i])
-		{
-			if (s[i] == '\n')
-				d->map_height++;
-			else
-				d->map_width++;
-			i++;
-		}
-		free(s);
-		s = get_next_line(fd);
-	}
-	close(fd);
-	map = malloc(sizeof(char *) * (d->map_height + 1));
-	if (!map)
-		return (NULL);
-	fd = open("map.ber", O_RDONLY);
-	i = 0;
-	s = get_next_line(fd);
-	while (i < d->map_height)
-	{
-		map[i] = malloc(sizeof(char) * (d->map_width + 1));
-		if (!map[i])
-			return (NULL);
-		j = 0;
-		while (j < d->map_width)
-		{
-			if (s[j] == 'C')
-				d->coins++;
-			map[i][j] = s[j];
-			j++;
-		}
-		map[i][j] = '\0';
-		free(s);
-		s = get_next_line(fd);
-		i++;
-	}
-	map[i] = NULL;
-	close(fd);
-	return (map);
-}
-
 
 void	load_imgs(t_data *d)
 {
@@ -124,7 +97,6 @@ void	put_img_to_map(t_data *d, char **map)
 		while (j < d->map_width)
 		{
 			c = map[i][j];
-			// printf("%c", c);
 			if (c == '0')
 				mlx_put_image_to_window(d->mlx, d->win, d->background.img, j * 32, i * 32);
 			else if (c == '1')
@@ -137,7 +109,6 @@ void	put_img_to_map(t_data *d, char **map)
 				mlx_put_image_to_window(d->mlx, d->win, d->exitt.img, j * 32, i * 32);
 			j++;
 		}
-		// printf("\n");
 		i++;
 	}
 }
@@ -152,24 +123,16 @@ int		check_map(t_data *d)
 	int		x;
 	int		y;
 
-	d->walls = 0;
-	d->collectibles = 0;
-	d->st_pos = 0;
-	d->exit_E = 0;
-	d->free_space = 0;
-	y = 0;
-	while (y < d->map_height)
+	y = -1;
+	while (++y >= 0 && y < d->map_height)
 	{
-		x = 0;
-		while (x < d->map_width)
+		x = -1;
+		while (++x >= 0 && x < d->map_width)
 		{
 			if (d->map[y][0] != '1' || d->map[y][d->map_width - 1] != '1' || d->map[0][0] != '1' || d->map[0][x] != '1' || d->map[d->map_height - 1][0] != '1' || d->map[d->map_height - 1][x] != '1')
 				return (0);
 			if (d->map[y][x] == '1')
-			{
-				// printf("y = %d\tx = %d\n", y, x);
 				d->walls++;
-			}
 			else if (d->map[y][x] == 'P')
 				d->st_pos++;
 			else if (d->map[y][x] == 'C')
@@ -180,15 +143,9 @@ int		check_map(t_data *d)
 				d->free_space++;
 			else
 				return (0);
-			x++;
 		}
-		y++;
 	}
-	// printf("1 = %d\tP = %d\tE = %d\tC = %d\t0 = %d\n", d->walls, d->st_pos, d->exit_E, d->collectibles, d->free_space);
-	// printf("%d\t%d\t%d\n", (d->map_height * 2), (d->map_width * 2), (d->map_height * 2) + (d->map_width * 2) - 4);
-	if (d->exit_E != 1 || d->st_pos != 1 || d->collectibles < 1 || d->free_space < 1 || d->walls < ((d->map_height * 2) + (d->map_width * 2) - 4))
-		return (0);
-	return (1);
+	return (!(d->exit_E != 1 || d->st_pos != 1 || d->collectibles < 1 || d->free_space < 1 || d->walls < ((d->map_height * 2) + (d->map_width * 2) - 4)));
 }
 
 void	dfs(char **map, int y, int x, char O, char N, t_data *d)
@@ -211,6 +168,47 @@ void	dfs(char **map, int y, int x, char O, char N, t_data *d)
 		dfs(map, y, x + 1, O, N, d);
 		dfs(map, y, x - 1, O, N, d);
 	}
+}
+
+char	**map_cpy(char **map, int y, int x)
+{
+	int		i;
+	int		j;
+	char	**new_map;
+
+	new_map = malloc(sizeof(char *) * (y + 1));
+	if (!new_map)
+		return (NULL);
+	i = 0;
+	while (i < y)
+	{
+		new_map[i] = malloc(sizeof(char) * (x + 1));
+		if (!new_map[i])
+			return (NULL);
+		j = 0;
+		while (j < x)
+		{
+			new_map[i][j] = map[i][j];
+			j++;
+		}
+		new_map[i][j] = '\0';
+		i++;
+	}
+	new_map[i] = NULL;
+	return (new_map);
+}
+
+void	free_map(char **pt, int y)
+{
+	int	i;
+
+	i = 0;
+	while (i < y)
+	{
+		free(pt[i]);
+		i++;
+	}
+	free(pt);
 }
 
 int		valid_map(t_data *d, char **map)
@@ -237,8 +235,7 @@ int		valid_map(t_data *d, char **map)
 		printf("\n");
 		y++;
 	}
-	free_map(cp_map);
-
+	free_map(cp_map, d->map_height);
 	return (c == 0);
 }
 
@@ -250,43 +247,25 @@ int		valid_map(t_data *d, char **map)
 5- check map
 4- check if the playyer can eat all collectibles
 */
-int		main()
+int		main(int ac, char **av)
 {
 	t_data	d;
-	int		x;
-	int		y;
 
-	d.num_mov = 0;
-	d.coins = 0;
+	if (ac != 2)
+		return (0);
+	initialize(&d);
 	d.mlx = mlx_init();
-
 	d.win = mlx_new_window(d.mlx, 9 * 32, 5 * 32, "Titleeeee");
-	d.map = take_map(&d);
+	d.map = take_map(&d, av);
 	if (!d.map)
 		return (0);
-
 	if (!check_map(&d) || !valid_map(&d, d.map))
 	{
-		printf("Error\n");
+		write(2, "Error\n", 6);
 		exit(1);
 	}
-
 	load_imgs(&d);
-
 	put_img_to_map(&d, d.map);
-
-	for (y = 0; y < d.map_height; y++)
-	{
-		for (x = 0; x < d.map_width; x++)
-		{
-			if (d.map[y][x] == 'P')
-			{
-				d.x = x;
-				d.y = y;
-				break ;
-			}
-		}
-	}
 	mlx_hook(d.win, 2, 1L<<0, handle_key_press, &d);
 	mlx_loop(d.mlx);
 }
