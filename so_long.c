@@ -23,6 +23,7 @@ void	init_null(t_data *d)
 
 void	initialize(t_data *d)
 {
+	d->frame_slower = 0;
 	d->x = 0;
 	d->y = 0;
 	d->j = 0;
@@ -70,6 +71,8 @@ void	cleaning(t_data *d)
 		mlx_destroy_image(d->mlx, d->exit_2.img);
 	if (d->exitt.img)
 		mlx_destroy_image(d->mlx, d->exitt.img);
+	if (d->player_exit.img)
+		mlx_destroy_image(d->mlx, d->player_exit.img);
 	cleaning_player(d);
 	if (d->win)
 		mlx_destroy_window(d->mlx, d->win);
@@ -85,23 +88,23 @@ int	main(int ac, char **av)
 	t_data	d;
 
 	if (ac != 2)
-		return (0);
+		return (1);
 	initialize(&d);
 	d.map = take_map(&d, av);
 	if (!d.map)
-		return (0);
-	if (!check_map(&d) || !valid_map(&d, d.map) || !valid_map_2(&d, d.map))
+		return (1);
+	if (!check_map(&d) || !valid_map(&d, d.map))
 	{
 		(cleaning(&d), write(2, "Error\n", 6));
-		exit(1);
+		return (1);
 	}
 	d.mlx = mlx_init();
 	if (!d.mlx)
-		return (0);
+		return (free(d.map), 1);
 	d.win = mlx_new_window(d.mlx, d.map_width * 32, \
-	d.map_height * 32, "Titleeeee");
+	d.map_height * 32, "ta7");
 	if (!d.win)
-		return (0);
+		return (free(d.mlx), free(d.map), 1);
 	load_imgs(&d);
 	put_img_to_map(&d, d.map);
 	mlx_hook(d.win, 2, 1L << 0, handle_key_press, &d);
