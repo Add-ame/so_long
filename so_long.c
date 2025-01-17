@@ -28,14 +28,14 @@ void	initialize(t_data *d)
 	d->y = 0;
 	d->j = 0;
 	d->i = 0;
-	d->player_p = 0;
 	d->num_mov = 0;
 	d->coins = 0;
-	d->walls = 0;
-	d->collectibles = 0;
-	d->st_pos = 0;
-	d->exit_e = 0;
-	d->free_space = 0;
+	d->wall_count = 0;
+	d->collectibles_count = 0;
+	d->enemy_count = 0;
+	d->player_count = 0;
+	d->exit_count = 0;
+	d->free_space_count = 0;
 	d->frame = 0;
 	d->n = 'N';
 	d->o = '0';
@@ -89,13 +89,12 @@ int	main(int ac, char **av)
 
 	if (ac != 2)
 		return (1);
-	initialize(&d);
-	d.map = take_map(&d, av);
+	(initialize(&d), d.map = take_map(&d, av));
 	if (!d.map)
 		return (1);
 	if (!check_map(&d) || !valid_map(&d, d.map))
 	{
-		(cleaning(&d), write(2, "Error\n", 6));
+		cleaning(&d);
 		return (1);
 	}
 	d.mlx = mlx_init();
@@ -105,9 +104,10 @@ int	main(int ac, char **av)
 	d.map_height * 32, "ta7");
 	if (!d.win)
 		return (free(d.mlx), free(d.map), 1);
-	load_imgs(&d);
+	(load_imgs(&d), write(1, BLU, 5), write(2, "Welcome!\n", 9), \
+	write(1, RESET, 4));
 	put_img_to_map(&d, d.map);
-	mlx_hook(d.win, 2, 1L << 0, handle_key_press, &d);
-	mlx_loop_hook(d.mlx, (int (*)())update_animation, &d);
-	(mlx_hook(d.win, 17, 0, close_win, &d), mlx_loop(d.mlx));
+	mlx_hook(d.win, 2, 1, handle_key_press, &d);
+	mlx_loop_hook(d.mlx, (int (*)(void *))update_animation, &d);
+	(mlx_hook(d.win, 17, 1L << 17, close_win, &d), mlx_loop(d.mlx));
 }
